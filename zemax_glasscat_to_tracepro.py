@@ -3,6 +3,8 @@ Zemax 玻璃库导入 TracePro
 
 仅在 TracePro 7.x 测试，不一定适用于其他版本
 运行前请至少启动 TracePro 一次
+
+GitHub: https://github.com/Redlnn/zemax_glasscat2tracepro/
 """
 
 import logging
@@ -116,10 +118,8 @@ res = cur.execute(
 
 if not res:
     cur.execute(
-        (
-            'INSERT INTO "main"."MaterialCatalogs" ("Name", "Table", "Type") VALUES '
-            f"('{glasscat_name}', '{glasscat_name}', '0');"
-        )
+        'INSERT INTO "main"."MaterialCatalogs" ("Name", "Table", "Type") VALUES '
+        f"('{glasscat_name}', '{glasscat_name}', '0');"
     )
 
 logging.info(f'打开玻璃库: {glasscat_path}')
@@ -180,7 +180,7 @@ try:
                 )
                 logging.info(
                     (
-                        f'新玻璃 -- 名称: {glass["name"]}, 描述: {glass["Description"]}'
+                        f'玻璃名称: {glass["name"]}, 描述: {glass["Description"]}'
                         f', 波长范围: {glass["WaveStart"]}~{glass["WaveEnd"]}'
                     )
                 )
@@ -219,33 +219,33 @@ try:
         and ((glass["name"],) not in res)
         and glass["name"] != ""
     ):
-        sql = (
-            'INSERT INTO "main"."MATL-{glasscat_name}" ("Name", "Description", '
-            '"MILSPEC", "WavelengthStart", "WavelengthEnd", "UserData", "Type", '
-            '"NTerm", "Term0", "Term1", "Term2", "Term3", "Term4", "Term5", "Term6"'
-            ', "Term7", "Term8", "Term9") VALUES (\'{name}\', \'{description}\', '
-            "'', '{wav_start}', '{wav_end}', '0', '{equ_type}', '0.0', "
-            "'{term1}', '{term2}', '{term3}', '{term4}', '{term5}', '{term6}',"
-            " '0.0', '0.0', '0.0', '0.0');"
-        ).format(
-            glasscat_name=glasscat_name,
-            name=glass["name"],
-            description=glass["Description"],
-            wav_start=glass["WaveStart"],
-            wav_end=glass["WaveEnd"],
-            equ_type=glass["Equation"],
-            term1=glass["coefficient"][0],
-            term2=glass["coefficient"][1],
-            term3=glass["coefficient"][2],
-            term4=glass["coefficient"][3],
-            term5=glass["coefficient"][4],
-            term6=glass["coefficient"][5],
+        cur.execute(
+            (
+                'INSERT INTO "main"."MATL-{glasscat_name}" ("Name", "Description", '
+                '"MILSPEC", "WavelengthStart", "WavelengthEnd", "UserData", "Type", '
+                '"NTerm", "Term0", "Term1", "Term2", "Term3", "Term4", "Term5", "Term6"'
+                ', "Term7", "Term8", "Term9") VALUES (\'{name}\', \'{description}\', '
+                "'', '{wav_start}', '{wav_end}', '0', '{equ_type}', '0.0', "
+                "'{term1}', '{term2}', '{term3}', '{term4}', '{term5}', '{term6}',"
+                " '0.0', '0.0', '0.0', '0.0');"
+            ).format(
+                glasscat_name=glasscat_name,
+                name=glass["name"],
+                description=glass["Description"],
+                wav_start=glass["WaveStart"],
+                wav_end=glass["WaveEnd"],
+                equ_type=glass["Equation"],
+                term1=glass["coefficient"][0],
+                term2=glass["coefficient"][1],
+                term3=glass["coefficient"][2],
+                term4=glass["coefficient"][3],
+                term5=glass["coefficient"][4],
+                term6=glass["coefficient"][5],
+            )
         )
-        logging.info(sql)
-        cur.execute(sql)
         logging.info(
             (
-                f'新玻璃 -- 名称: {glass["name"]}, 描述: {glass["Description"]}, '
+                f'玻璃名称: {glass["name"]}, 描述: {glass["Description"]}, '
                 f'波长范围: {glass["WaveStart"]}~{glass["WaveEnd"]}'
             )
         )
@@ -256,7 +256,6 @@ except Exception:
     raise
 else:
     cur.close()
-    conn.rollback()
     conn.commit()
     logging.info('已保存数据库')
 finally:
