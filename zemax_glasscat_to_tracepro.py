@@ -24,21 +24,34 @@ equation_map = {
     "1": "1",  # Schoot
     "2": "2",  # Sellmeier 1
     "3": "4",  # Herzberger
+    "4": "6",  # Sellmeier 2
+    "5": "5",  # Conrady
+    "6": "7",  # Sellmeier 3
+    "7": "9",  # Handbook 1
+    "8": "10",  # Handbook 2
+    "9": "8",  # Sellmeier 4
 }
 
 root = tk.Tk()
 root.withdraw()
 
+my_document = Path(
+    winreg.QueryValueEx(
+        winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
+        ),
+        "Personal",
+    )[0]
+)
+
+if (my_document / 'zemax' / 'glasscat').exists():
+    initialdir = my_document / 'zemax' / 'glasscat'
+else:
+    initialdir = my_document
+
 path = filedialog.askopenfilename(
-    initialdir=Path(
-        winreg.QueryValueEx(
-            winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders",
-            ),
-            "Personal",
-        )[0]
-    ),
+    initialdir=initialdir,
     title="选择玻璃库",
     filetypes=(("Zemax 玻璃库文件", "*.agf"),),
 )
@@ -143,7 +156,11 @@ class Glass(TypedDict, total=False):
 
 
 try:
-    glass = Glass(name="", Description="")
+    glass = Glass(
+        name="",
+        Description="",
+        coefficient=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    )
     res = cur.execute(f'SELECT Name FROM "main"."MATL-{glasscat_name}"').fetchall()
     while line := f.readline():
         lines = line.split()
@@ -162,7 +179,7 @@ try:
                         '"Term9") VALUES (\'{name}\', \'{description}\', \'\', '
                         "'{wav_start}', '{wav_end}', '0', '{equ_type}', "
                         "'0.0', '{term1}', '{term2}', '{term3}', '{term4}', "
-                        "'{term5}', '{term6}', '0.0', '0.0', '0.0', '0.0');"
+                        "'{term5}', '{term6}', '{term7}', '{term8}', '{term9}', '{term10}');"
                     ).format(
                         glasscat_name=glasscat_name,
                         name=glass["name"],
@@ -176,6 +193,10 @@ try:
                         term4=glass["coefficient"][3],
                         term5=glass["coefficient"][4],
                         term6=glass["coefficient"][5],
+                        term7=glass["coefficient"][6],
+                        term8=glass["coefficient"][7],
+                        term9=glass["coefficient"][8],
+                        term10=glass["coefficient"][9],
                     )
                 )
                 logging.info(
@@ -185,30 +206,49 @@ try:
                     )
                 )
 
-                glass = Glass(name="", Description="")
+                glass = Glass(
+                    name="",
+                    Description="",
+                    coefficient=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                )
             glass["name"] = lines[1]
             glass["Equation"] = equation_map[str(int(float(lines[2])))]
         if line.startswith("GC"):
             glass["Description"] = line.split(" ", 1)[1].rstrip()
         if line.startswith("CD"):
-            if glass["Equation"] in ("1", "4"):
-                glass["coefficient"] = [
-                    float(lines[1]),
-                    float(lines[2]),
-                    float(lines[3]),
-                    float(lines[4]),
-                    float(lines[5]),
-                    float(lines[6]),
-                ]
-            elif glass["Equation"] == "2":
-                glass["coefficient"] = [
-                    float(lines[1]),
-                    float(lines[3]),
-                    float(lines[5]),
-                    float(lines[2]),
-                    float(lines[4]),
-                    float(lines[6]),
-                ]
+            if glass["Equation"] in ("1", "3", "4", "5"):
+                glass["coefficient"][0] = float(lines[1])
+                glass["coefficient"][1] = float(lines[2])
+                glass["coefficient"][2] = float(lines[3])
+                glass["coefficient"][3] = float(lines[4])
+                glass["coefficient"][4] = float(lines[5])
+                glass["coefficient"][5] = float(lines[6])
+                glass["coefficient"][6] = float(lines[7])
+                glass["coefficient"][7] = float(lines[8])
+                glass["coefficient"][8] = float(lines[9])
+                glass["coefficient"][9] = float(lines[10])
+            elif glass["Equation"] == "2":  # Sellmeier 1
+                glass["coefficient"][0] = float(lines[1])
+                glass["coefficient"][1] = float(lines[3])
+                glass["coefficient"][2] = float(lines[5])
+                glass["coefficient"][3] = float(lines[2])
+                glass["coefficient"][4] = float(lines[4])
+                glass["coefficient"][5] = float(lines[6])
+            elif glass["Equation"] in ("6", "8"):  # Sellmeier 2 / 4
+                glass["coefficient"][0] = float(lines[1])
+                glass["coefficient"][1] = float(lines[2])
+                glass["coefficient"][2] = float(lines[4])
+                glass["coefficient"][3] = float(lines[3])
+                glass["coefficient"][4] = float(lines[5])
+            elif glass["Equation"] == "7":  # Sellmeier 3
+                glass["coefficient"][0] = float(lines[1])
+                glass["coefficient"][1] = float(lines[3])
+                glass["coefficient"][2] = float(lines[5])
+                glass["coefficient"][3] = float(lines[7])
+                glass["coefficient"][4] = float(lines[2])
+                glass["coefficient"][5] = float(lines[4])
+                glass["coefficient"][6] = float(lines[6])
+                glass["coefficient"][7] = float(lines[8])
             else:
                 raise ValueError("Unknow Equation")
         if line.startswith("LD"):
