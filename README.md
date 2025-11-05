@@ -2,6 +2,9 @@
 
 一键将 Zemax 的玻璃库（`*.AGF`）导入 TracePro 中
 
+> [!IMPORTANT] 
+> 仅在 `TracePro 7.x` 测试，不一定适用于其他版本，运行前请至少启动 TracePro 一次
+
 ## 使用方法
 
 1. 安装 Python 3.8 或更高版本
@@ -14,7 +17,13 @@
 1. 如果导入不成功，可以通过在 CMD 里执行 `python zemax_glasscat_to_tracepro.py` 查看错误消息
 2. 若导入的玻璃为 TracePro 自带的（例如 TracePro 中自带成都光明的玻璃库），TracePro 在直接打开 Zemax
    文件时会优选使用自带的而非导入的，需要手动修改，或者通过其他方法删除 TracePro 自带的成都光明的玻璃库
-3. 脚本目前仅支持以下 3 种公式，能覆盖大部分玻璃，若遇到无法导入或导入后缺少玻璃，请通过 **issue** 联系我
+3. 脚本目前支持以下种公式，能覆盖大部分玻璃：
    - Schoot
    - Sellmeier 1
    - Herzberger
+   - Sellmeier 2
+   - Conrady
+   - Sellmeier 3
+   - Handbook 1
+   - Handbook 2
+   - Sellmeier 4
